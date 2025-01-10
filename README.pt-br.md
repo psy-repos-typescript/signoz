@@ -5,7 +5,6 @@
 </p>
 
 <p align="center">
-    <img alt="License" src="https://img.shields.io/badge/license-MIT-brightgreen"> </a>
     <img alt="Downloads" src="https://img.shields.io/docker/pulls/signoz/frontend?label=Downloads"> </a>
     <img alt="GitHub issues" src="https://img.shields.io/github/issues/signoz/signoz"> </a>
     <a href="https://twitter.com/intent/tweet?text=Monitor%20your%20applications%20and%20troubleshoot%20problems%20with%20SigNoz,%20an%20open-source%20alternative%20to%20DataDog,%20NewRelic.&url=https://signoz.io/&via=SigNozHQ&hashtags=opensource,signoz,observability"> 
@@ -15,7 +14,7 @@
   
 <h3 align="center">
   <a href="https://signoz.io/docs"><b>Documentação</b></a> &bull;
-  <a href="https://bit.ly/signoz-slack"><b>Comunidade no Slack</b></a> &bull;
+  <a href="https://signoz.io/slack"><b>Comunidade no Slack</b></a> &bull;
   <a href="https://twitter.com/SigNozHq"><b>Twitter</b></a>
 </h3>
 
@@ -38,7 +37,7 @@ SigNoz auxilia os desenvolvedores a monitorarem aplicativos e solucionar problem
 
 ## Junte-se à nossa comunidade no Slack 
 
-Venha dizer oi para nós no [Slack](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA) 👋
+Venha dizer oi para nós no [Slack](https://signoz.io/slack) 👋
 
 <br /><br />
 
@@ -85,9 +84,9 @@ Você pode encontrar a lista completa de linguagens aqui - https://opentelemetry
   
 ### Implantar usando Docker
 
-Siga as etapas listadas [aqui](https://signoz.io/docs/deployment/docker/) para instalar usando o Docker.
+Siga as etapas listadas [aqui](https://signoz.io/docs/install/docker/) para instalar usando o Docker.
 
-Esse [guia para solução de problemas](https://signoz.io/docs/deployment/troubleshooting) pode ser útil se você enfrentar quaisquer problemas. 
+Esse [guia para solução de problemas](https://signoz.io/docs/install/troubleshooting/) pode ser útil se você enfrentar quaisquer problemas. 
 
 <p>&nbsp  </p>
   
@@ -129,7 +128,7 @@ Além disso, SigNoz tem alguns recursos mais avançados do que Jaeger:
 
 Nós ❤️ contribuições grandes ou pequenas. Leia [CONTRIBUTING.md](CONTRIBUTING.md) para começar a fazer contribuições para o SigNoz. 
 
-Não sabe como começar? Basta enviar um sinal para nós no canal `#contributing` em nossa [comunidade no Slack.](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA)
+Não sabe como começar? Basta enviar um sinal para nós no canal `#contributing` em nossa [comunidade no Slack.](https://signoz.io/slack)
 
 <br /><br />
 
@@ -145,7 +144,7 @@ Você pode encontrar a documentação em https://signoz.io/docs/. Se você tiver
 
 ## Comunidade
 
-Junte-se a [comunidade no Slack](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA) para saber mais sobre rastreamento distribuído, observabilidade ou SigNoz e para se conectar com outros usuários e colaboradores. 
+Junte-se a [comunidade no Slack](https://signoz.io/slack) para saber mais sobre rastreamento distribuído, observabilidade ou SigNoz e para se conectar com outros usuários e colaboradores. 
 
 Se você tiver alguma ideia, pergunta ou feedback, compartilhe em nosso [Github Discussões](https://github.com/SigNoz/signoz/discussions)
 

@@ -1,77 +1,82 @@
-import getGroupApi from 'api/alerts/getGroup';
+import getTriggeredApi from 'api/alerts/getTriggered';
+import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
-import { State } from 'hooks/useFetch';
-import React, { useCallback, useEffect, useState } from 'react';
-import { Alerts } from 'types/api/alerts/getAll';
-import { PayloadProps } from 'types/api/alerts/getGroups';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import useAxiosError from 'hooks/useAxiosError';
+import { isUndefined } from 'lodash-es';
+import { useAppContext } from 'providers/App/App';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useQuery } from 'react-query';
 
+import { Value } from './Filter';
 import TriggerComponent from './TriggeredAlert';
 
-const TriggeredAlerts = (): JSX.Element => {
-	const [groupState, setGroupState] = useState<State<PayloadProps>>({
-		error: false,
-		errorMessage: '',
-		loading: true,
-		success: false,
-		payload: [],
-	});
+function TriggeredAlerts(): JSX.Element {
+	const [selectedGroup, setSelectedGroup] = useState<Value[]>([]);
+	const [selectedFilter, setSelectedFilter] = useState<Value[]>([]);
 
-	const fetchData = useCallback(async () => {
-		try {
-			setGroupState((state) => ({
-				...state,
-				loading: true,
-			}));
+	const { user } = useAppContext();
 
-			const response = await getGroupApi({
-				active: true,
-				inhibited: true,
-				silenced: false,
-			});
+	const hasLoggedEvent = useRef(false); // Track if logEvent has been called
 
-			if (response.statusCode === 200) {
-				setGroupState((state) => ({
-					...state,
-					loading: false,
-					payload: response.payload || [],
-				}));
-			} else {
-				setGroupState((state) => ({
-					...state,
-					loading: false,
-					error: true,
-					errorMessage: response.error || 'Something went wrong',
-				}));
-			}
-		} catch (error) {
-			setGroupState((state) => ({
-				...state,
-				error: true,
-				loading: false,
-				errorMessage: 'Something went wrong',
-			}));
-		}
+	const handleError = useAxiosError();
+
+	const alertsResponse = useQuery(
+		[REACT_QUERY_KEY.GET_TRIGGERED_ALERTS, user.id],
+		{
+			queryFn: () =>
+				getTriggeredApi({
+					active: true,
+					inhibited: true,
+					silenced: false,
+				}),
+			refetchInterval: 30000,
+			onError: handleError,
+		},
+	);
+
+	const handleSelectedFilterChange = useCallback((newFilter: Value[]) => {
+		setSelectedFilter(newFilter);
+	}, []);
+
+	const handleSelectedGroupChange = useCallback((newGroup: Value[]) => {
+		setSelectedGroup(newGroup);
 	}, []);
 
 	useEffect(() => {
-		fetchData();
-	}, [fetchData]);
+		if (!hasLoggedEvent.current && !isUndefined(alertsResponse.data?.payload)) {
+			logEvent('Alert: Triggered alert list page visited', {
+				number: alertsResponse.data?.payload?.length,
+			});
+			hasLoggedEvent.current = true;
+		}
+	}, [alertsResponse.data?.payload]);
 
-	if (groupState.error) {
-		return <div>{groupState.errorMessage}</div>;
+	if (alertsResponse.error) {
+		return (
+			<TriggerComponent
+				allAlerts={[]}
+				selectedFilter={selectedFilter}
+				selectedGroup={selectedGroup}
+				onSelectedFilterChange={handleSelectedFilterChange}
+				onSelectedGroupChange={handleSelectedGroupChange}
+			/>
+		);
 	}
 
-	if (groupState.loading || groupState.payload === undefined) {
+	if (alertsResponse.isFetching || alertsResponse?.data?.payload === undefined) {
 		return <Spinner height="75vh" tip="Loading Alerts..." />;
 	}
 
-	const initialAlerts: Alerts[] = [];
-
-	const allAlerts: Alerts[] = groupState.payload.reduce((acc, curr) => {
-		return [...acc, ...curr.alerts];
-	}, initialAlerts);
-
-	return <TriggerComponent allAlerts={allAlerts} />;
-};
+	return (
+		<TriggerComponent
+			allAlerts={alertsResponse?.data?.payload || []}
+			selectedFilter={selectedFilter}
+			selectedGroup={selectedGroup}
+			onSelectedFilterChange={handleSelectedFilterChange}
+			onSelectedGroupChange={handleSelectedGroupChange}
+		/>
+	);
+}
 
 export default TriggeredAlerts;

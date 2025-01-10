@@ -1,18 +1,21 @@
-import { IS_LOGGED_IN } from 'constants/auth';
 import {
 	AppAction,
-	LOGGED_IN,
-	SWITCH_DARK_MODE,
-	TOGGLE_SETTINGS_TABS,
+	UPDATE_CONFIGS,
+	UPDATE_CURRENT_ERROR,
+	UPDATE_CURRENT_VERSION,
+	UPDATE_LATEST_VERSION,
+	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
-import getTheme from 'lib/theme/getTheme';
 import InitialValueTypes from 'types/reducer/app';
-import getLocalStorageKey from 'api/browser/localstorage/get';
 
 const InitialValue: InitialValueTypes = {
-	isDarkMode: getTheme() === 'darkMode' ? true : false,
-	isLoggedIn: getLocalStorageKey(IS_LOGGED_IN) === 'yes',
-	settingsActiveTab: 'General',
+	currentVersion: '',
+	latestVersion: '',
+	isCurrentVersionError: false,
+	isLatestVersionError: false,
+	configs: {},
+	ee: 'Y',
+	setupCompleted: true,
 };
 
 const appReducer = (
@@ -20,27 +23,35 @@ const appReducer = (
 	action: AppAction,
 ): InitialValueTypes => {
 	switch (action.type) {
-		case SWITCH_DARK_MODE: {
+		case UPDATE_CURRENT_VERSION: {
 			return {
 				...state,
-				isDarkMode: !state.isDarkMode,
+				currentVersion: action.payload.currentVersion,
+				ee: action.payload.ee,
+				setupCompleted: action.payload.setupCompleted,
 			};
 		}
 
-		case LOGGED_IN: {
-			return {
-				...state,
-				isLoggedIn: true,
-			};
+		case UPDATE_LATEST_VERSION: {
+			return { ...state, latestVersion: action.payload.latestVersion };
 		}
 
-		case TOGGLE_SETTINGS_TABS: {
-			return {
-				...state,
-				settingsActiveTab: action.payload.activeTab,
-			};
+		case UPDATE_CURRENT_ERROR: {
+			return { ...state, isCurrentVersionError: true };
 		}
 
+		case UPDATE_LATEST_VERSION_ERROR: {
+			return {
+				...state,
+				isLatestVersionError: true,
+			};
+		}
+		case UPDATE_CONFIGS: {
+			return {
+				...state,
+				configs: action.payload.configs,
+			};
+		}
 		default:
 			return state;
 	}
