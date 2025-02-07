@@ -1,167 +1,364 @@
-import {
-	// Button,
-	Input,
-	// Slider,
-	// Switch,
-	// Typography,
-} from 'antd';
-import InputComponent from 'components/Input';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
-import React, { useCallback } from 'react';
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+import './RightContainer.styles.scss';
 
+import { Input, InputNumber, Select, Space, Switch, Typography } from 'antd';
+import TimePreference from 'components/TimePreferenceDropDown';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import GraphTypes, {
+	ItemsProps,
+} from 'container/NewDashboard/ComponentsSlider/menuItems';
+import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { ConciergeBell, Plus } from 'lucide-react';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useState,
+} from 'react';
+import { ColumnUnit, Widgets } from 'types/api/dashboard/getAll';
+import { DataSource } from 'types/common/queryBuilder';
+
+import { ColumnUnitSelector } from './ColumnUnitSelector/ColumnUnitSelector';
+import {
+	panelTypeVsBucketConfig,
+	panelTypeVsColumnUnitPreferences,
+	panelTypeVsCreateAlert,
+	panelTypeVsFillSpan,
+	panelTypeVsPanelTimePreferences,
+	panelTypeVsSoftMinMax,
+	panelTypeVsStackingChartPreferences,
+	panelTypeVsThreshold,
+	panelTypeVsYAxisUnit,
+} from './constants';
+import ThresholdSelector from './Threshold/ThresholdSelector';
+import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
+import YAxisUnitSelector from './YAxisUnitSelector';
 
 const { TextArea } = Input;
-import TimePreference from 'components/TimePreferenceDropDown';
+const { Option } = Select;
 
-import {
-	Container,
-	// NullButtonContainer, TextContainer,
-	Title,
-} from './styles';
-
-const RightContainer = ({
+function RightContainer({
 	description,
-	// opacity,
-	// selectedNullZeroValue,
 	setDescription,
-	// setOpacity,
-	// setSelectedNullZeroValue,
-	// setStacked,
 	setTitle,
-	// stacked,
 	title,
 	selectedGraph,
+	bucketCount,
+	bucketWidth,
+	stackedBarChart,
+	setStackedBarChart,
+	setBucketCount,
+	setBucketWidth,
 	setSelectedTime,
 	selectedTime,
-}: RightContainerProps): JSX.Element => {
+	yAxisUnit,
+	setYAxisUnit,
+	setGraphHandler,
+	thresholds,
+	combineHistogram,
+	setCombineHistogram,
+	setThresholds,
+	selectedWidget,
+	isFillSpans,
+	setIsFillSpans,
+	softMax,
+	softMin,
+	setSoftMax,
+	setSoftMin,
+	columnUnits,
+	setColumnUnits,
+}: RightContainerProps): JSX.Element {
 	const onChangeHandler = useCallback(
-		(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
+		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
 			setFunc(value);
 		},
 		[],
 	);
 
-	// const nullValueButtons = [
-	// 	{
-	// 		check: 'zero',
-	// 		name: 'Zero',
-	// 	},
-	// 	{
-	// 		check: 'interpolate',
-	// 		name: 'Interpolate',
-	// 	},
-	// 	{
-	// 		check: 'blank',
-	// 		name: 'Blank',
-	// 	},
-	// ];
-
 	const selectedGraphType =
 		GraphTypes.find((e) => e.name === selectedGraph)?.display || '';
 
-	return (
-		<Container>
-			<InputComponent
-				labelOnTop
-				label="Panel Type"
-				size="middle"
-				value={selectedGraphType}
-				disabled
-			/>
+	const onCreateAlertsHandler = useCreateAlerts(selectedWidget, 'panelView');
 
-			<Title>Panel Attributes</Title>
+	const allowThreshold = panelTypeVsThreshold[selectedGraph];
+	const allowSoftMinMax = panelTypeVsSoftMinMax[selectedGraph];
+	const allowFillSpans = panelTypeVsFillSpan[selectedGraph];
+	const allowYAxisUnit = panelTypeVsYAxisUnit[selectedGraph];
+	const allowCreateAlerts = panelTypeVsCreateAlert[selectedGraph];
+	const allowBucketConfig = panelTypeVsBucketConfig[selectedGraph];
+	const allowStackingBarChart =
+		panelTypeVsStackingChartPreferences[selectedGraph];
+	const allowPanelTimePreference =
+		panelTypeVsPanelTimePreferences[selectedGraph];
 
-			<InputComponent
-				label="Panel Title"
-				size="middle"
-				placeholder="Title"
-				labelOnTop
-				onChangeHandler={(event): void =>
-					onChangeHandler(setTitle, event.target.value)
-				}
-				value={title}
-			/>
+	const allowPanelColumnPreference =
+		panelTypeVsColumnUnitPreferences[selectedGraph];
 
-			<Title light={'true'}>Description</Title>
+	const { currentQuery } = useQueryBuilder();
 
-			<TextArea
-				placeholder="Write something describing the  panel"
-				bordered
-				allowClear
-				value={description}
-				onChange={(event): void =>
-					onChangeHandler(setDescription, event.target.value)
-				}
-			/>
+	const [graphTypes, setGraphTypes] = useState<ItemsProps[]>(GraphTypes);
 
-			{/* <TextContainer>
-				<Typography>Stacked Graphs :</Typography>
-				<Switch
-					checked={stacked}
-					onChange={(): void => {
-						setStacked((value) => !value);
-					}}
-				/>
-			</TextContainer> */}
+	useEffect(() => {
+		const queryContainsMetricsDataSource = currentQuery.builder.queryData.some(
+			(query) => query.dataSource === DataSource.METRICS,
+		);
 
-			{/* <Title light={'true'}>Fill Opacity: </Title> */}
+		if (queryContainsMetricsDataSource) {
+			setGraphTypes((prev) =>
+				prev.filter((graph) => graph.name !== PANEL_TYPES.LIST),
+			);
+		} else {
+			setGraphTypes(GraphTypes);
+		}
+	}, [currentQuery]);
 
-			{/* <Slider
-				value={parseInt(opacity, 10)}
-				marks={{
-					0: '0',
-					33: '33',
-					66: '66',
-					100: '100',
-				}}
-				onChange={(number): void => onChangeHandler(setOpacity, number.toString())}
-				step={1}
-			/> */}
-
-			{/* <Title light={'true'}>Null/Zero values: </Title>
-
-			<NullButtonContainer>
-				{nullValueButtons.map((button) => (
-					<Button
-						type={button.check === selectedNullZeroValue ? 'primary' : 'default'}
-						key={button.name}
-						onClick={(): void =>
-							onChangeHandler(setSelectedNullZeroValue, button.check)
-						}
-					>
-						{button.name}
-					</Button>
-				))}
-			</NullButtonContainer> */}
-
-			<Title light={'true'}>Panel Time Preference</Title>
-
-			<TimePreference
-				{...{
-					selectedTime,
-					setSelectedTime,
-				}}
-			/>
-		</Container>
+	const softMinHandler = useCallback(
+		(value: number | null) => {
+			setSoftMin(value);
+		},
+		[setSoftMin],
 	);
-};
+
+	const softMaxHandler = useCallback(
+		(value: number | null) => {
+			setSoftMax(value);
+		},
+		[setSoftMax],
+	);
+
+	return (
+		<div className="right-container">
+			<section className="header">
+				<div className="purple-dot" />
+				<Typography.Text className="header-text">Panel details</Typography.Text>
+			</section>
+			<section className="name-description">
+				<Typography.Text className="typography">Name</Typography.Text>
+				<Input
+					placeholder="Enter the panel name here..."
+					onChange={(event): void => onChangeHandler(setTitle, event.target.value)}
+					value={title}
+					rootClassName="name-input"
+				/>
+				<Typography.Text className="typography">Description</Typography.Text>
+				<TextArea
+					placeholder="Enter the panel description here..."
+					bordered
+					allowClear
+					value={description}
+					onChange={(event): void =>
+						onChangeHandler(setDescription, event.target.value)
+					}
+					rootClassName="description-input"
+				/>
+			</section>
+			<section className="panel-config">
+				<Typography.Text className="typography">Panel Type</Typography.Text>
+				<Select
+					onChange={setGraphHandler}
+					value={selectedGraph}
+					style={{ width: '100%' }}
+					className="panel-type-select"
+					data-testid="panel-change-select"
+				>
+					{graphTypes.map((item) => (
+						<Option key={item.name} value={item.name}>
+							<div className="select-option">
+								<div className="icon">{item.icon}</div>
+								<Typography.Text className="display">{item.display}</Typography.Text>
+							</div>
+						</Option>
+					))}
+				</Select>
+
+				{allowFillSpans && (
+					<Space className="fill-gaps">
+						<Typography className="fill-gaps-text">Fill gaps</Typography>
+						<Switch
+							checked={isFillSpans}
+							size="small"
+							onChange={(checked): void => setIsFillSpans(checked)}
+						/>
+					</Space>
+				)}
+
+				{allowPanelTimePreference && (
+					<>
+						<Typography.Text className="panel-time-text">
+							Panel Time Preference
+						</Typography.Text>
+						<TimePreference
+							{...{
+								selectedTime,
+								setSelectedTime,
+							}}
+						/>
+					</>
+				)}
+
+				{allowPanelColumnPreference && (
+					<ColumnUnitSelector
+						columnUnits={columnUnits}
+						setColumnUnits={setColumnUnits}
+					/>
+				)}
+
+				{allowYAxisUnit && (
+					<YAxisUnitSelector
+						defaultValue={yAxisUnit}
+						onSelect={setYAxisUnit}
+						fieldLabel={
+							selectedGraphType === 'Value' || selectedGraphType === 'Pie'
+								? 'Unit'
+								: 'Y Axis Unit'
+						}
+					/>
+				)}
+				{allowSoftMinMax && (
+					<section className="soft-min-max">
+						<section className="container">
+							<Typography.Text className="text">Soft Min</Typography.Text>
+							<InputNumber
+								type="number"
+								value={softMin}
+								onChange={softMinHandler}
+								rootClassName="input"
+							/>
+						</section>
+						<section className="container">
+							<Typography.Text className="text">Soft Max</Typography.Text>
+							<InputNumber
+								value={softMax}
+								type="number"
+								rootClassName="input"
+								onChange={softMaxHandler}
+							/>
+						</section>
+					</section>
+				)}
+
+				{allowStackingBarChart && (
+					<section className="stack-chart">
+						<Typography.Text className="label">Stack series</Typography.Text>
+						<Switch
+							checked={stackedBarChart}
+							size="small"
+							onChange={(checked): void => setStackedBarChart(checked)}
+						/>
+					</section>
+				)}
+
+				{allowBucketConfig && (
+					<section className="bucket-config">
+						<Typography.Text className="label">Number of buckets</Typography.Text>
+						<InputNumber
+							value={bucketCount || null}
+							type="number"
+							min={0}
+							rootClassName="bucket-input"
+							placeholder="Default: 30"
+							onChange={(val): void => {
+								setBucketCount(val || 0);
+							}}
+						/>
+						<Typography.Text className="label bucket-size-label">
+							Bucket width
+						</Typography.Text>
+						<InputNumber
+							value={bucketWidth || null}
+							type="number"
+							precision={2}
+							placeholder="Default: Auto"
+							step={0.1}
+							min={0.0}
+							rootClassName="bucket-input"
+							onChange={(val): void => {
+								setBucketWidth(val || 0);
+							}}
+						/>
+						<section className="combine-hist">
+							<Typography.Text className="label">
+								Merge all series into one
+							</Typography.Text>
+							<Switch
+								checked={combineHistogram}
+								size="small"
+								onChange={(checked): void => setCombineHistogram(checked)}
+							/>
+						</section>
+					</section>
+				)}
+			</section>
+
+			{allowCreateAlerts && (
+				<section className="alerts" onClick={onCreateAlertsHandler}>
+					<div className="left-section">
+						<ConciergeBell size={14} className="bell-icon" />
+						<Typography.Text className="alerts-text">Alerts</Typography.Text>
+					</div>
+					<Plus size={14} className="plus-icon" />
+				</section>
+			)}
+
+			{allowThreshold && (
+				<section>
+					<ThresholdSelector
+						thresholds={thresholds}
+						setThresholds={setThresholds}
+						yAxisUnit={yAxisUnit}
+						selectedGraph={selectedGraph}
+						columnUnits={columnUnits}
+					/>
+				</section>
+			)}
+		</div>
+	);
+}
 
 interface RightContainerProps {
 	title: string;
-	setTitle: React.Dispatch<React.SetStateAction<string>>;
+	setTitle: Dispatch<SetStateAction<string>>;
 	description: string;
-	setDescription: React.Dispatch<React.SetStateAction<string>>;
+	setDescription: Dispatch<SetStateAction<string>>;
 	stacked: boolean;
-	setStacked: React.Dispatch<React.SetStateAction<boolean>>;
+	setStacked: Dispatch<SetStateAction<boolean>>;
 	opacity: string;
-	setOpacity: React.Dispatch<React.SetStateAction<string>>;
+	setOpacity: Dispatch<SetStateAction<string>>;
 	selectedNullZeroValue: string;
-	setSelectedNullZeroValue: React.Dispatch<React.SetStateAction<string>>;
-	selectedGraph: GRAPH_TYPES;
-	setSelectedTime: React.Dispatch<React.SetStateAction<timePreferance>>;
+	setSelectedNullZeroValue: Dispatch<SetStateAction<string>>;
+	selectedGraph: PANEL_TYPES;
+	setSelectedTime: Dispatch<SetStateAction<timePreferance>>;
 	selectedTime: timePreferance;
+	yAxisUnit: string;
+	stackedBarChart: boolean;
+	setStackedBarChart: Dispatch<SetStateAction<boolean>>;
+	bucketWidth: number;
+	bucketCount: number;
+	combineHistogram: boolean;
+	setCombineHistogram: Dispatch<SetStateAction<boolean>>;
+	setBucketWidth: Dispatch<SetStateAction<number>>;
+	setBucketCount: Dispatch<SetStateAction<number>>;
+	setYAxisUnit: Dispatch<SetStateAction<string>>;
+	setGraphHandler: (type: PANEL_TYPES) => void;
+	thresholds: ThresholdProps[];
+	setThresholds: Dispatch<SetStateAction<ThresholdProps[]>>;
+	selectedWidget?: Widgets;
+	isFillSpans: boolean;
+	setIsFillSpans: Dispatch<SetStateAction<boolean>>;
+	softMin: number | null;
+	softMax: number | null;
+	columnUnits: ColumnUnit;
+	setColumnUnits: Dispatch<SetStateAction<ColumnUnit>>;
+	setSoftMin: Dispatch<SetStateAction<number | null>>;
+	setSoftMax: Dispatch<SetStateAction<number | null>>;
 }
+
+RightContainer.defaultProps = {
+	selectedWidget: undefined,
+};
 
 export default RightContainer;

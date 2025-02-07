@@ -1,22 +1,43 @@
-import { SettingTab } from 'types/reducer/app';
+import AppReducer from 'types/reducer/app';
 
-export const SWITCH_DARK_MODE = 'SWITCH_DARK_MODE';
-export const LOGGED_IN = 'LOGGED_IN';
-export const TOGGLE_SETTINGS_TABS = 'TOGGLE_SETTINGS_TABS';
+export const UPDATE_CURRENT_VERSION = 'UPDATE_CURRENT_VERSION';
+export const UPDATE_LATEST_VERSION = 'UPDATE_LATEST_VERSION';
+export const UPDATE_CURRENT_ERROR = 'UPDATE_CURRENT_ERROR';
+export const UPDATE_LATEST_VERSION_ERROR = 'UPDATE_LATEST_VERSION_ERROR';
+export const UPDATE_CONFIGS = 'UPDATE_CONFIGS';
 
-export interface SwitchDarkMode {
-	type: typeof SWITCH_DARK_MODE;
-}
-
-export interface LoggedInUser {
-	type: typeof LOGGED_IN;
-}
-
-export interface ToggleSettingsTab {
-	type: typeof TOGGLE_SETTINGS_TABS;
+export interface UpdateAppVersion {
+	type: typeof UPDATE_CURRENT_VERSION;
 	payload: {
-		activeTab: SettingTab;
+		currentVersion: AppReducer['currentVersion'];
+		ee: AppReducer['ee'];
+		setupCompleted: AppReducer['setupCompleted'];
 	};
 }
 
-export type AppAction = SwitchDarkMode | LoggedInUser | ToggleSettingsTab;
+export interface UpdateLatestVersion {
+	type: typeof UPDATE_LATEST_VERSION;
+	payload: {
+		latestVersion: AppReducer['latestVersion'];
+	};
+}
+
+export interface UpdateVersionError {
+	type: typeof UPDATE_CURRENT_ERROR | typeof UPDATE_LATEST_VERSION_ERROR;
+	payload: {
+		isError: boolean;
+	};
+}
+
+export interface UpdateConfigs {
+	type: typeof UPDATE_CONFIGS;
+	payload: {
+		configs: AppReducer['configs'];
+	};
+}
+
+export type AppAction =
+	| UpdateAppVersion
+	| UpdateLatestVersion
+	| UpdateVersionError
+	| UpdateConfigs;

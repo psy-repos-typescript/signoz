@@ -1,26 +1,19 @@
-import GridGraphLayout from 'container/GridGraphLayout';
-import ComponentsSlider from 'container/NewDashboard/ComponentsSlider';
-import React from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import DashboardReducer from 'types/reducer/dashboards';
+import GridGraphLayout from 'container/GridCardLayout';
+import { FullScreenHandle } from 'react-full-screen';
 
 import { GridComponentSliderContainer } from './styles';
 
-const GridGraphs = (): JSX.Element => {
-	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
+interface GridGraphsProps {
+	handle: FullScreenHandle;
+}
 
+function GridGraphs(props: GridGraphsProps): JSX.Element {
+	const { handle } = props;
 	return (
-		<>
-			<GridComponentSliderContainer>
-				{isAddWidget && <ComponentsSlider />}
-
-				<GridGraphLayout />
-			</GridComponentSliderContainer>
-		</>
+		<GridComponentSliderContainer>
+			<GridGraphLayout handle={handle} />
+		</GridComponentSliderContainer>
 	);
-};
+}
 
 export default GridGraphs;

@@ -1,24 +1,32 @@
 import NotFoundImage from 'assets/NotFound';
 import ROUTES from 'constants/routes';
-import React from 'react';
 
+import { defaultText } from './constant';
 import { Button, Container, Text, TextContainer } from './styles';
 
-const NotFound = (): JSX.Element => {
+function NotFound({ text = defaultText }: Props): JSX.Element {
 	return (
 		<Container>
 			<NotFoundImage />
 
 			<TextContainer>
-				<Text>Ah, seems like we reached a dead end!</Text>
+				<Text>{text}</Text>
 				<Text>Page Not Found</Text>
 			</TextContainer>
 
 			<Button to={ROUTES.APPLICATION} tabIndex={0}>
-				Return To Metrics Page
+				Return To Services Page
 			</Button>
 		</Container>
 	);
+}
+
+interface Props {
+	text?: string;
+}
+
+NotFound.defaultProps = {
+	text: defaultText,
 };
 
 export default NotFound;

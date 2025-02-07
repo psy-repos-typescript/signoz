@@ -1,26 +1,28 @@
-import { Button } from 'antd';
+import { LockFilled } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
-import React, { useCallback } from 'react';
-import { generatePath, useHistory } from 'react-router-dom';
+import history from 'lib/history';
 
-import { Data } from '..';
+import { Data } from '../DashboardsList';
+import { TableLinkText } from './styles';
 
-const Name = (name: Data['name'], data: Data): JSX.Element => {
-	const { push } = useHistory();
+function Name(name: Data['name'], data: Data): JSX.Element {
+	const { id: DashboardId, isLocked } = data;
 
-	const onClickHandler = useCallback(() => {
-		push(
-			generatePath(ROUTES.DASHBOARD, {
-				dashboardId: data.id,
-			}),
-		);
-	}, [data.id, push]);
+	const getLink = (): string => `${ROUTES.ALL_DASHBOARD}/${DashboardId}`;
+
+	const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
+		if (event.metaKey || event.ctrlKey) {
+			window.open(getLink(), '_blank');
+		} else {
+			history.push(getLink());
+		}
+	};
 
 	return (
-		<Button onClick={onClickHandler} type="link">
-			{name}
-		</Button>
+		<TableLinkText onClick={onClickHandler}>
+			{isLocked && <LockFilled />} {name}
+		</TableLinkText>
 	);
-};
+}
 
 export default Name;

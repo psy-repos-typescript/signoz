@@ -1,26 +1,29 @@
 /* eslint-disable react/display-name */
-import { Table, Tag, Typography } from 'antd';
+import { Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import { ResizeTable } from 'components/ResizeTable';
+import LabelColumn from 'components/TableRenderer/LabelColumn';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import AlertStatus from 'container/TriggeredAlerts/TableComponents/AlertStatus';
-import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
-import getFormattedDate from 'lib/getFormatedDate';
-import React from 'react';
-import { Alerts } from 'types/api/alerts/getAll';
+import { useTimezone } from 'providers/Timezone';
+import { Alerts } from 'types/api/alerts/getTriggered';
 
 import { Value } from './Filter';
 import { FilterAlerts } from './utils';
 
-const NoFilterTable = ({
+function NoFilterTable({
 	allAlerts,
 	selectedFilter,
-}: NoFilterTableProps): JSX.Element => {
+}: NoFilterTableProps): JSX.Element {
 	const filteredAlerts = FilterAlerts(allAlerts, selectedFilter);
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	// need to add the filter
 	const columns: ColumnsType<Alerts> = [
 		{
 			title: 'Status',
 			dataIndex: 'status',
+			width: 80,
 			key: 'status',
 			sorter: (a, b): number =>
 				b.labels.severity.length - a.labels.severity.length,
@@ -30,8 +33,10 @@ const NoFilterTable = ({
 			title: 'Alert Name',
 			dataIndex: 'labels',
 			key: 'alertName',
+			width: 100,
 			sorter: (a, b): number =>
-				a.labels?.alertname?.length - b.labels?.alertname?.length,
+				(a.labels?.alertname?.charCodeAt(0) || 0) -
+				(b.labels?.alertname?.charCodeAt(0) || 0),
 			render: (data): JSX.Element => {
 				const name = data?.alertname || '';
 				return <Typography>{name}</Typography>;
@@ -41,6 +46,7 @@ const NoFilterTable = ({
 			title: 'Tags',
 			dataIndex: 'labels',
 			key: 'tags',
+			width: 100,
 			render: (labels): JSX.Element => {
 				const objectKeys = Object.keys(labels);
 				const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
@@ -50,11 +56,7 @@ const NoFilterTable = ({
 				}
 
 				return (
-					<>
-						{withOutSeverityKeys.map((e) => {
-							return <Tag key={e} color="magenta">{`${e} : ${labels[e]}`}</Tag>;
-						})}
-					</>
+					<LabelColumn labels={withOutSeverityKeys} value={labels} color="magenta" />
 				);
 			},
 		},
@@ -62,9 +64,10 @@ const NoFilterTable = ({
 			title: 'Severity',
 			dataIndex: 'labels',
 			key: 'severity',
+			width: 100,
 			sorter: (a, b): number => {
-				const severityValueA = a.labels['severity'];
-				const severityValueB = b.labels['severity'];
+				const severityValueA = a.labels.severity;
+				const severityValueB = b.labels.severity;
 				return severityValueA.length - severityValueB.length;
 			},
 			render: (value): JSX.Element => {
@@ -78,24 +81,26 @@ const NoFilterTable = ({
 		{
 			title: 'Firing Since',
 			dataIndex: 'startsAt',
+			width: 100,
 			sorter: (a, b): number =>
 				new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
-			render: (date): JSX.Element => {
-				const formatedDate = new Date(date);
-
-				return (
-					<Typography>{`${getFormattedDate(formatedDate)} ${convertDateToAmAndPm(
-						formatedDate,
-					)}`}</Typography>
-				);
-			},
+			render: (date): JSX.Element => (
+				<Typography>{`${formatTimezoneAdjustedTimestamp(
+					date,
+					DATE_TIME_FORMATS.UTC_US,
+				)}`}</Typography>
+			),
 		},
 	];
 
 	return (
-		<Table rowKey="startsAt" dataSource={filteredAlerts} columns={columns} />
+		<ResizeTable
+			columns={columns}
+			rowKey={(record): string => `${record.startsAt}-${record.fingerprint}`}
+			dataSource={filteredAlerts}
+		/>
 	);
-};
+}
 
 interface NoFilterTableProps {
 	allAlerts: Alerts[];

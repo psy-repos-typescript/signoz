@@ -1,41 +1,47 @@
-import { AxiosError } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 import { ErrorResponse } from 'types/api';
 import { ErrorStatusCode } from 'types/common';
 
-export const ErrorResponseHandler = (error: AxiosError): ErrorResponse => {
-	if (error.response) {
+export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
+	const { response, request } = error;
+	if (response) {
 		// client received an error response (5xx, 4xx)
 		// making the error status code as standard Error Status Code
-		const statusCode = error.response.status as ErrorStatusCode;
+		const statusCode = response.status as ErrorStatusCode;
+
+		const { data } = response as AxiosResponse;
 
 		if (statusCode >= 400 && statusCode < 500) {
-			const { data } = error.response;
-
 			if (statusCode === 404) {
 				return {
 					statusCode,
 					payload: null,
-					error: 'Not Found',
+					error: data.errorType || data.type,
 					message: null,
 				};
 			}
 
+			const { errors, error } = data;
+
+			const errorMessage =
+				Array.isArray(errors) && errors.length >= 1 ? errors[0].msg : error;
+
 			return {
 				statusCode,
 				payload: null,
-				error: data.error,
-				message: null,
+				error: errorMessage,
+				message: (response.data as any)?.status,
+				body: JSON.stringify((response.data as any).data),
 			};
 		}
-
 		return {
 			statusCode,
 			payload: null,
 			error: 'Something went wrong',
-			message: null,
+			message: data?.error,
 		};
 	}
-	if (error.request) {
+	if (request) {
 		// client never received a response, or request never left
 		console.error('client never received a response, or request never left');
 
@@ -51,7 +57,7 @@ export const ErrorResponseHandler = (error: AxiosError): ErrorResponse => {
 	return {
 		statusCode: 500,
 		payload: null,
-		error: error.toString(),
+		error: String(error),
 		message: null,
 	};
-};
+}

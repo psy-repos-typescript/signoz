@@ -10,7 +10,7 @@ import {
 } from 'types/actions/metrics';
 import InitialValueTypes from 'types/reducer/metrics';
 
-const InitialValue: InitialValueTypes = {
+export const InitialValue: InitialValueTypes = {
 	error: false,
 	errorMessage: '',
 	loading: true,
@@ -18,10 +18,11 @@ const InitialValue: InitialValueTypes = {
 	services: [],
 	dbOverView: [],
 	externalService: [],
-	topEndPoints: [],
+	topOperations: [],
 	externalAverageDuration: [],
 	externalError: [],
 	serviceOverview: [],
+	topLevelOperations: [],
 };
 
 const metrics = (
@@ -35,7 +36,7 @@ const metrics = (
 			return {
 				...state,
 				error: true,
-				errorMessage: errorMessage,
+				errorMessage,
 				loading: false,
 			};
 		}
@@ -73,30 +74,35 @@ const metrics = (
 		case RESET_INITIAL_APPLICATION_DATA: {
 			return {
 				...InitialValue,
+				// ...state.resourceAttributeQueries,
+				// resourceAttributeQueries: state.resourceAttributeQueries,
 			};
 		}
 
 		case GET_INTIAL_APPLICATION_DATA: {
 			const {
 				// dbOverView,
-				topEndPoints,
+				topOperations,
 				serviceOverview,
 				// externalService,
 				// externalAverageDuration,
 				// externalError,
+				topLevelOperations,
 			} = action.payload;
 
 			return {
 				...state,
 				// dbOverView,
-				topEndPoints,
+				topOperations,
 				serviceOverview,
 				// externalService,
 				// externalAverageDuration,
 				// externalError,
 				metricsApplicationLoading: false,
+				topLevelOperations,
 			};
 		}
+
 		default:
 			return state;
 	}

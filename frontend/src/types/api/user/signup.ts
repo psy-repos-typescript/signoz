@@ -1,4 +1,10 @@
 export interface Props {
-	email: string;
 	name: string;
+	orgName: string;
+	email: string;
+	password: string;
+	token?: string;
+	sourceUrl?: string;
+	isAnonymous?: boolean;
+	hasOptedUpdates?: boolean;
 }

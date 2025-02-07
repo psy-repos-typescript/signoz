@@ -1,16 +1,17 @@
-import { Button } from 'antd';
-import { NotificationInstance } from 'antd/lib/notification/index';
+import { NotificationInstance } from 'antd/es/notification/interface';
 import deleteAlerts from 'api/alerts/delete';
 import { State } from 'hooks/useFetch';
-import React, { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { PayloadProps as DeleteAlertPayloadProps } from 'types/api/alerts/delete';
-import { Alerts } from 'types/api/alerts/getAll';
+import { GettableAlert } from 'types/api/alerts/get';
 
-const DeleteAlert = ({
+import { ColumnButton } from './styles';
+
+function DeleteAlert({
 	id,
 	setData,
 	notifications,
-}: DeleteAlertProps): JSX.Element => {
+}: DeleteAlertProps): JSX.Element {
 	const [deleteAlertState, setDeleteAlertState] = useState<
 		State<DeleteAlertPayloadProps>
 	>({
@@ -21,13 +22,10 @@ const DeleteAlert = ({
 		payload: undefined,
 	});
 
+	const defaultErrorMessage = 'Something went wrong';
+
 	const onDeleteHandler = async (id: number): Promise<void> => {
 		try {
-			setDeleteAlertState((state) => ({
-				...state,
-				loading: true,
-			}));
-
 			const response = await deleteAlerts({
 				id,
 			});
@@ -48,11 +46,11 @@ const DeleteAlert = ({
 					...state,
 					loading: false,
 					error: true,
-					errorMessage: response.error || 'Something went wrong',
+					errorMessage: response.error || defaultErrorMessage,
 				}));
 
 				notifications.error({
-					message: response.error || 'Something went wrong',
+					message: response.error || defaultErrorMessage,
 				});
 			}
 		} catch (error) {
@@ -60,32 +58,38 @@ const DeleteAlert = ({
 				...state,
 				loading: false,
 				error: true,
-				errorMessage: 'Something went wrong',
+				errorMessage: defaultErrorMessage,
 			}));
 
 			notifications.error({
-				message: 'Something went wrong',
+				message: defaultErrorMessage,
 			});
 		}
 	};
 
+	const onClickHandler = (): void => {
+		setDeleteAlertState((state) => ({
+			...state,
+			loading: true,
+		}));
+		onDeleteHandler(id);
+	};
+
 	return (
-		<>
-			<Button
-				disabled={deleteAlertState.loading || false}
-				loading={deleteAlertState.loading || false}
-				onClick={(): Promise<void> => onDeleteHandler(id)}
-				type="link"
-			>
-				Delete
-			</Button>
-		</>
+		<ColumnButton
+			disabled={deleteAlertState.loading || false}
+			loading={deleteAlertState.loading || false}
+			onClick={onClickHandler}
+			type="link"
+		>
+			Delete
+		</ColumnButton>
 	);
-};
+}
 
 interface DeleteAlertProps {
-	id: Alerts['id'];
-	setData: React.Dispatch<React.SetStateAction<Alerts[]>>;
+	id: GettableAlert['id'];
+	setData: Dispatch<SetStateAction<GettableAlert[]>>;
 	notifications: NotificationInstance;
 }
 

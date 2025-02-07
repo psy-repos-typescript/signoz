@@ -1,19 +1,18 @@
-import { Dictionary } from 'lodash';
-import groupBy from 'lodash/groupBy';
-import React, { useMemo } from 'react';
-import { Alerts } from 'types/api/alerts/getAll';
+import groupBy from 'lodash-es/groupBy';
+import { useMemo } from 'react';
+import { Alerts } from 'types/api/alerts/getTriggered';
 
 import { Value } from '../Filter';
 import { FilterAlerts } from '../utils';
 import { Container, TableHeader, TableHeaderContainer } from './styles';
 import TableRowComponent from './TableRow';
 
-const FilteredTable = ({
+function FilteredTable({
 	selectedGroup,
 	allAlerts,
 	selectedFilter,
-}: FilteredTableProps): JSX.Element => {
-	const allGroupsAlerts: Dictionary<Alerts[]> = useMemo(
+}: FilteredTableProps): JSX.Element {
+	const allGroupsAlerts = useMemo(
 		() =>
 			groupBy(FilterAlerts(allAlerts, selectedFilter), (obj) =>
 				selectedGroup.map((e) => obj.labels[`${e.value}`]).join('+'),
@@ -65,7 +64,7 @@ const FilteredTable = ({
 			})}
 		</Container>
 	);
-};
+}
 
 interface FilteredTableProps {
 	selectedGroup: Value[];

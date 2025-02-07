@@ -1,46 +1,95 @@
-import React, { useCallback } from 'react';
-import { useHistory, useLocation } from 'react-router';
-import { v4 } from 'uuid';
+import './ComponentSlider.styles.scss';
 
-import menuItems, { ITEMS } from './menuItems';
-import { Card, Container, Text } from './styles';
+import { Card, Modal } from 'antd';
+import logEvent from 'api/common/logEvent';
+import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import createQueryParams from 'lib/createQueryParams';
+import history from 'lib/history';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { LogsAggregatorOperator } from 'types/common/queryBuilder';
+import { v4 as uuid } from 'uuid';
 
-const DashboardGraphSlider = (): JSX.Element => {
-	const onDragStartHandler: React.DragEventHandler<HTMLDivElement> = useCallback(
-		(event: React.DragEvent<HTMLDivElement>) => {
-			event.dataTransfer.setData('text/plain', event.currentTarget.id);
-		},
-		[],
-	);
-	const { push } = useHistory();
-	const { pathname } = useLocation();
+import { PANEL_TYPES_INITIAL_QUERY } from './constants';
+import menuItems from './menuItems';
+import { Text } from './styles';
 
-	const onClickHandler = useCallback(
-		(name: ITEMS) => {
-			const generateWidgetId = v4();
-			push(`${pathname}/new?graphType=${name}&widgetId=${generateWidgetId}`);
-		},
-		[push, pathname],
-	);
+function DashboardGraphSlider(): JSX.Element {
+	const { handleToggleDashboardSlider, isDashboardSliderOpen } = useDashboard();
+
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	const onClickHandler = (name: PANEL_TYPES) => (): void => {
+		const id = uuid();
+		handleToggleDashboardSlider(false);
+		logEvent('Dashboard Detail: New panel type selected', {
+			// dashboardId: '',
+			// dashboardName: '',
+			// numberOfPanels: 0, // todo - at this point we don't know these attributes
+			panelType: name,
+			widgetId: id,
+		});
+		const queryParamsLog = {
+			graphType: name,
+			widgetId: id,
+			[QueryParams.compositeQuery]: JSON.stringify({
+				...PANEL_TYPES_INITIAL_QUERY[name],
+				builder: {
+					...PANEL_TYPES_INITIAL_QUERY[name].builder,
+					queryData: [
+						{
+							...PANEL_TYPES_INITIAL_QUERY[name].builder.queryData[0],
+							aggregateOperator: LogsAggregatorOperator.NOOP,
+							orderBy: [{ columnName: 'timestamp', order: 'desc' }],
+							offset: 0,
+							pageSize: 100,
+						},
+					],
+				},
+			}),
+		};
+
+		const queryParams = {
+			graphType: name,
+			widgetId: id,
+			[QueryParams.compositeQuery]: JSON.stringify(
+				PANEL_TYPES_INITIAL_QUERY[name],
+			),
+		};
+		if (name === PANEL_TYPES.LIST) {
+			history.push(
+				`${history.location.pathname}/new?${createQueryParams(queryParamsLog)}`,
+			);
+		} else {
+			history.push(
+				`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
+			);
+		}
+	};
+
+	const handleCardClick = (panelType: PANEL_TYPES): void => {
+		onClickHandler(panelType)();
+	};
 
 	return (
-		<Container>
-			{menuItems.map(({ name, Icon, display }) => (
-				<Card
-					onClick={(): void => onClickHandler(name)}
-					id={name}
-					onDragStart={onDragStartHandler}
-					key={name}
-					draggable
-				>
-					<Icon />
-					<Text>{display}</Text>
-				</Card>
-			))}
-		</Container>
+		<Modal
+			open={isDashboardSliderOpen}
+			onCancel={(): void => {
+				handleToggleDashboardSlider(false);
+			}}
+			rootClassName="graph-selection"
+			footer={null}
+			title="New Panel"
+		>
+			<div className="panel-selection">
+				{menuItems.map(({ name, icon, display }) => (
+					<Card onClick={(): void => handleCardClick(name)} id={name} key={name}>
+						{icon}
+						<Text>{display}</Text>
+					</Card>
+				))}
+			</div>
+		</Modal>
 	);
-};
-
-export type GRAPH_TYPES = ITEMS;
+}
 
 export default DashboardGraphSlider;

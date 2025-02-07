@@ -3,21 +3,24 @@ import styled from 'styled-components';
 
 export const Layout = styled(LayoutComponent)`
 	&&& {
-		min-height: 100vh;
 		display: flex;
 		position: relative;
+		min-height: calc(100vh - 8rem);
+		overflow: hidden;
+		height: 100%;
+		flex-direction: column !important;
 	}
 `;
 
-export const Content = styled(LayoutComponent.Content)`
-	&&& {
-		margin: 0 1rem;
+export const LayoutContent = styled(LayoutComponent.Content)`
+	height: 100%;
+	&::-webkit-scrollbar {
+		width: 0.1rem;
 	}
 `;
 
-export const Footer = styled(LayoutComponent.Footer)`
-	&&& {
-		text-align: center;
-		font-size: 0.7rem;
-	}
+export const ChildrenContainer = styled.div`
+	display: flex;
+	flex-direction: column;
+	height: 100%;
 `;

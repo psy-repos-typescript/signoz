@@ -1,21 +1,19 @@
-import CreateAlertChannels from 'container/CreateAlertChannels';
-import GeneralSettings from 'container/GeneralSettings';
-import SettingsWrapper from 'container/SettingsWrapper';
-import React from 'react';
+import RouteTab from 'components/RouteTab';
+import history from 'lib/history';
+import { useLocation } from 'react-router-dom';
 
-const SettingsPage = (): JSX.Element => {
-	const AlertChannels = (): JSX.Element => {
-		return <CreateAlertChannels />;
-	};
+import { alertsRoutesConfig } from './config';
+
+function SettingsPage(): JSX.Element {
+	const { pathname } = useLocation();
 
 	return (
-		<SettingsWrapper
-			{...{
-				AlertChannels,
-				General: GeneralSettings,
-			}}
+		<RouteTab
+			history={history}
+			routes={alertsRoutesConfig}
+			activeKey={pathname}
 		/>
 	);
-};
+}
 
 export default SettingsPage;

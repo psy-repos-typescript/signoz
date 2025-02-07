@@ -1,21 +1,28 @@
+/* eslint-disable  */
+//@ts-nocheck
+
+import { Card } from 'antd';
 import Spinner from 'components/Spinner';
-import React, { useEffect, useRef } from 'react';
-import { ForceGraph2D } from 'react-force-graph';
+import TextToolTip from 'components/TextToolTip';
+import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
+import useResourceAttribute from 'hooks/useResourceAttribute';
+import { whilelistedKeys } from 'hooks/useResourceAttribute/config';
+import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
+import { useEffect, useRef } from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
-import {
-	getDetailedServiceMapItems,
-	getServiceMapItems,
-	serviceMapStore,
-} from 'store/actions';
+import { getDetailedServiceMapItems, ServiceMapStore } from 'store/actions';
 import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 import { GlobalTime } from 'types/actions/globalTime';
 
-import SelectService from './SelectService';
-import { getGraphData, getTooltip, getZoomPx, transformLabel } from './utils';
+import Map from './Map';
 
 const Container = styled.div`
+	.force-graph-container {
+		overflow: scroll;
+	}
+
 	.force-graph-container .graph-tooltip {
 		background: black;
 		padding: 1px;
@@ -32,10 +39,12 @@ const Container = styled.div`
 `;
 
 interface ServiceMapProps extends RouteComponentProps<any> {
-	serviceMap: serviceMapStore;
+	serviceMap: ServiceMapStore;
 	globalTime: GlobalTime;
-	getServiceMapItems: (time: GlobalTime) => void;
-	getDetailedServiceMapItems: (time: GlobalTime) => void;
+	getDetailedServiceMapItems: (
+		time: GlobalTime,
+		queries: IResourceAttribute[],
+	) => void;
 }
 interface graphNode {
 	id: string;
@@ -45,112 +54,77 @@ interface graphLink {
 	source: string;
 	target: string;
 	value: number;
+	callRate: number;
+	errorRate: number;
+	p99: number;
 }
 export interface graphDataType {
 	nodes: graphNode[];
 	links: graphLink[];
 }
 
-const ServiceMap = (props: ServiceMapProps): JSX.Element => {
+function ServiceMap(props: ServiceMapProps): JSX.Element {
 	const fgRef = useRef();
 
-	const {
-		getDetailedServiceMapItems,
-		getServiceMapItems,
-		globalTime,
-		serviceMap,
-	} = props;
+	const { getDetailedServiceMapItems, globalTime, serviceMap } = props;
+
+	const { queries } = useResourceAttribute();
 
 	useEffect(() => {
 		/*
 			Call the apis only when the route is loaded.
 			Check this issue: https://github.com/SigNoz/signoz/issues/110
 		 */
-		getServiceMapItems(globalTime);
-		getDetailedServiceMapItems(globalTime);
-	}, [globalTime, getServiceMapItems, getDetailedServiceMapItems]);
+		getDetailedServiceMapItems(globalTime, queries);
+	}, [globalTime, getDetailedServiceMapItems, queries]);
 
 	useEffect(() => {
 		fgRef.current && fgRef.current.d3Force('charge').strength(-400);
 	});
-	if (!serviceMap.items.length || !serviceMap.services.length) {
+
+	if (serviceMap.loading) {
 		return <Spinner size="large" tip="Loading..." />;
 	}
 
-	const zoomToService = (value: string): void => {
-		fgRef &&
-			fgRef.current &&
-			fgRef.current.zoomToFit(700, getZoomPx(), (e) => e.id === value);
-	};
-
-	const zoomToDefault = () => {
-		fgRef && fgRef.current && fgRef.current.zoomToFit(100, 120);
-	};
-
-	const { nodes, links } = getGraphData(serviceMap);
-	const graphData = { nodes, links };
+	if (!serviceMap.loading && serviceMap.items.length === 0) {
+		return (
+			<Container>
+				<ResourceAttributesFilter />
+				<Card>No Service Found</Card>
+			</Container>
+		);
+	}
 	return (
 		<Container>
-			<SelectService
-				services={serviceMap.services}
-				zoomToService={zoomToService}
-				zoomToDefault={zoomToDefault}
+			<ResourceAttributesFilter
+				suffixIcon={
+					<TextToolTip
+						{...{
+							text: `Currently, service map supports filtering of ${whilelistedKeys.join(
+								', ',
+							)} only, in resource attributes`,
+						}}
+					/>
+				}
 			/>
-			<ForceGraph2D
-				ref={fgRef}
-				cooldownTicks={100}
-				graphData={graphData}
-				nodeLabel={getTooltip}
-				linkAutoColorBy={(d) => d.target}
-				linkDirectionalParticles="value"
-				linkDirectionalParticleSpeed={(d) => d.value}
-				nodeCanvasObject={(node, ctx, globalScale) => {
-					const label = transformLabel(node.id);
-					const fontSize = node.fontSize;
-					ctx.font = `${fontSize}px Roboto`;
-					const width = node.width;
 
-					ctx.fillStyle = node.color;
-					ctx.beginPath();
-					ctx.arc(node.x, node.y, width, 0, 2 * Math.PI, false);
-					ctx.fill();
-					ctx.textAlign = 'center';
-					ctx.textBaseline = 'middle';
-					ctx.fillStyle = '#646464';
-					ctx.fillText(label, node.x, node.y);
-				}}
-				onNodeClick={(node) => {
-					const tooltip = document.querySelector('.graph-tooltip');
-					if (tooltip && node) {
-						tooltip.innerHTML = getTooltip(node);
-					}
-				}}
-				nodePointerAreaPaint={(node, color, ctx) => {
-					ctx.fillStyle = color;
-					ctx.beginPath();
-					ctx.arc(node.x, node.y, 5, 0, 2 * Math.PI, false);
-					ctx.fill();
-				}}
-			/>
+			<Map fgRef={fgRef} serviceMap={serviceMap} />
 		</Container>
 	);
-};
+}
 
 const mapStateToProps = (
 	state: AppState,
 ): {
 	serviceMap: serviceMapStore;
 	globalTime: GlobalTime;
-} => {
-	return {
-		serviceMap: state.serviceMap,
-		globalTime: state.globalTime,
-	};
-};
+} => ({
+	serviceMap: state.serviceMap,
+	globalTime: state.globalTime,
+});
 
 export default withRouter(
 	connect(mapStateToProps, {
-		getServiceMapItems: getServiceMapItems,
-		getDetailedServiceMapItems: getDetailedServiceMapItems,
+		getDetailedServiceMapItems,
 	})(ServiceMap),
 );

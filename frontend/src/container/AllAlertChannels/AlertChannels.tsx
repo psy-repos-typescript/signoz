@@ -1,17 +1,25 @@
 /* eslint-disable react/display-name */
-import { Button, notification, Table } from 'antd';
+import { Button } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import { ResizeTable } from 'components/ResizeTable';
 import ROUTES from 'constants/routes';
+import useComponentPermission from 'hooks/useComponentPermission';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import React, { useCallback, useState } from 'react';
-import { generatePath } from 'react-router';
+import { useAppContext } from 'providers/App/App';
+import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { generatePath } from 'react-router-dom';
 import { Channels, PayloadProps } from 'types/api/channels/getAll';
 
 import Delete from './Delete';
 
-const AlertChannels = ({ allChannels }: AlertChannelsProps): JSX.Element => {
-	const [notifications, Element] = notification.useNotification();
+function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
+	const { t } = useTranslation(['channels']);
+	const { notifications } = useNotifications();
 	const [channels, setChannels] = useState<Channels[]>(allChannels);
+	const { user } = useAppContext();
+	const [action] = useComponentPermission(['new_alert_action'], user.role);
 
 	const onClickEditHandler = useCallback((id: string) => {
 		history.replace(
@@ -23,39 +31,41 @@ const AlertChannels = ({ allChannels }: AlertChannelsProps): JSX.Element => {
 
 	const columns: ColumnsType<Channels> = [
 		{
-			title: 'Name',
+			title: t('column_channel_name'),
 			dataIndex: 'name',
 			key: 'name',
+			width: 100,
 		},
 		{
-			title: 'Type',
+			title: t('column_channel_type'),
 			dataIndex: 'type',
 			key: 'type',
+			width: 80,
 		},
-		{
-			title: 'Action',
+	];
+
+	if (action) {
+		columns.push({
+			title: t('column_channel_action'),
 			dataIndex: 'id',
 			key: 'action',
 			align: 'center',
+			width: 80,
 			render: (id: string): JSX.Element => (
 				<>
 					<Button onClick={(): void => onClickEditHandler(id)} type="link">
-						Edit
+						{t('column_channel_edit')}
 					</Button>
 					<Delete id={id} setChannels={setChannels} notifications={notifications} />
 				</>
 			),
-		},
-	];
+		});
+	}
 
 	return (
-		<>
-			{Element}
-
-			<Table rowKey="id" dataSource={channels} columns={columns} />
-		</>
+		<ResizeTable columns={columns} dataSource={channels} rowKey="id" bordered />
 	);
-};
+}
 
 interface AlertChannelsProps {
 	allChannels: PayloadProps;

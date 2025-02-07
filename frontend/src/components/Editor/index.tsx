@@ -1,45 +1,56 @@
-import * as monaco from 'monaco-editor';
-import React, { useEffect, useRef } from 'react';
+import MEditor, { EditorProps } from '@monaco-editor/react';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useMemo } from 'react';
 
-import { Container } from './styles';
+function Editor({
+	value,
+	language,
+	onChange,
+	readOnly,
+	height,
+	options,
+}: MEditorProps): JSX.Element {
+	const isDarkMode = useIsDarkMode();
 
-const Editor = ({ value }: EditorProps): JSX.Element => {
-	const divEl = useRef<HTMLDivElement>(null);
-	const editorRef = useRef<monaco.editor.IStandaloneCodeEditor>();
+	const onChangeHandler = (newValue?: string): void => {
+		if (readOnly) return;
 
-	useEffect(() => {
-		let editor = editorRef.current;
+		if (typeof newValue === 'string' && onChange) onChange(newValue);
+	};
 
-		if (divEl.current) {
-			editor = monaco.editor.create(divEl.current, {
-				value: value.current || '',
-				useShadowDOM: true,
-				theme: 'vs-dark',
-				automaticLayout: true,
-				fontSize: 16,
-				minimap: {
-					enabled: false,
-				},
-				language: 'yaml',
-			});
-		}
+	const editorOptions = useMemo(
+		() => ({ fontSize: 16, automaticLayout: true, readOnly, ...options }),
+		[options, readOnly],
+	);
 
-		editor?.getModel()?.onDidChangeContent(() => {
-			value.current = editor?.getValue() || '';
-		});
-
-		return (): void => {
-			if (editor) {
-				editor.dispose();
-			}
-		};
-	}, [value]);
-
-	return <Container ref={divEl} />;
-};
-
-interface EditorProps {
-	value: React.MutableRefObject<string>;
+	return (
+		<MEditor
+			theme={isDarkMode ? 'vs-dark' : 'vs-light'}
+			language={language}
+			value={value}
+			options={editorOptions}
+			height={height}
+			onChange={onChangeHandler}
+			data-testid="monaco-editor"
+		/>
+	);
 }
+
+interface MEditorProps {
+	value: string;
+	language?: string;
+	onChange?: (value: string) => void;
+	readOnly?: boolean;
+	height?: string;
+	options?: EditorProps['options'];
+}
+
+Editor.defaultProps = {
+	language: 'yaml',
+	readOnly: false,
+	height: '40vh',
+	options: {},
+	onChange: (): void => {},
+};
 
 export default Editor;

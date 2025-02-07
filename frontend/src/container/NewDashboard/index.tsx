@@ -1,15 +1,16 @@
-import React from 'react';
+import { useFullScreenHandle } from 'react-full-screen';
 
-import Description from './DescriptionOfDashboard';
+import Description from './DashboardDescription';
 import GridGraphs from './GridGraphs';
 
-const NewDashboard = (): JSX.Element => {
+function NewDashboard(): JSX.Element {
+	const handle = useFullScreenHandle();
 	return (
-		<>
-			<Description />
-			<GridGraphs />
-		</>
+		<div>
+			<Description handle={handle} />
+			<GridGraphs handle={handle} />
+		</div>
 	);
-};
+}
 
 export default NewDashboard;

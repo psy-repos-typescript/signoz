@@ -1,5 +1,10 @@
-import { applyMiddleware, compose, createStore } from 'redux';
+import {
+	applyMiddleware,
+	compose,
+	legacy_createStore as createStore,
+} from 'redux';
 import thunk, { ThunkMiddleware } from 'redux-thunk';
+import AppActions from 'types/actions';
 
 import reducers, { AppState } from './reducers';
 
@@ -8,8 +13,15 @@ const composeEnhancers =
 
 const store = createStore(
 	reducers,
-	// @TODO Add Type for AppActions also
-	composeEnhancers(applyMiddleware(thunk as ThunkMiddleware<AppState>)),
+	composeEnhancers(
+		applyMiddleware(thunk as ThunkMiddleware<AppState, AppActions>),
+	),
 );
+
+export type AppDispatch = typeof store.dispatch;
+
+if (window !== undefined) {
+	window.store = store;
+}
 
 export default store;
